@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso Restringido — JOTech Zero Trust</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-void:       #09090B;
+      --bg-surface:    #111113;
+      --bg-card:       #16161A;
+      --border:        #252529;
+      --border-hi:     rgba(0,191,255,0.18);
+      --border-alert:  rgba(220,60,60,0.35);
+      --cyan:          #00BFFF;
+      --cyan-dim:      rgba(0,191,255,0.10);
+      --cyan-mid:      rgba(0,191,255,0.18);
+      --red:           #DC3C3C;
+      --red-dim:       rgba(220,60,60,0.10);
+      --red-mid:       rgba(220,60,60,0.18);
+      --text-primary:  #EAEAEA;
+      --text-secondary:#8888A0;
+      --text-muted:    #3E3E4A;
+      --mono:          'DM Mono', monospace;
+      --sans:          'Syne', sans-serif;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,191,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,191,255,0.025) 1px, transparent 1px);
+      background-size: 52px 52px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Dual-tone ambient glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 500px;
+      background: radial-gradient(ellipse 60% 50% at 35% 50%, rgba(0,191,255,0.055) 0%, transparent 70%),
+                  radial-gradient(ellipse 60% 50% at 65% 50%, rgba(220,60,60,0.055) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top scanner bar */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--cyan) 30%,
+        rgba(0,191,255,0.4) 50%,
+        var(--red) 70%,
+        transparent 100%
+      );
+      z-index: 10;
+      animation: scanpulse 4s ease-in-out infinite;
+    }
+    @keyframes scanpulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+    /* ── CARD ── */
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 580px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.025),
+        0 40px 100px rgba(0,0,0,0.7),
+        0 0 50px rgba(0,191,255,0.06),
+        0 0 50px rgba(220,60,60,0.06);
+      animation: riseIn .65s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes riseIn {
+      from { opacity:0; transform: translateY(30px) scale(0.98); }
+      to   { opacity:1; transform: translateY(0)   scale(1); }
+    }
+
+    /* Card top stripe */
+    .card-stripe {
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan) 0%, var(--red) 100%);
+    }
+
+    /* Card body */
+    .card-body {
+      padding: 44px 48px 40px;
+    }
+
+    /* ── HEADER ROW ── */
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 32px;
+      animation: riseIn .65s .08s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .logo-wrap {
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      border-radius: 14px;
+      background: var(--cyan-dim);
+      border: 1px solid var(--border-hi);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+
+    .logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 6px rgba(0,191,255,0.35));
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    .brand-name span { color: var(--cyan); }
+
+    .brand-sub {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* Divider */
+    .sep {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border) 0%, rgba(0,191,255,0.15) 50%, var(--border) 100%);
+      margin-bottom: 28px;
+      animation: riseIn .65s .12s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* ── STATUS BADGE ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--red-dim);
+      border: 1px solid rgba(220,60,60,0.3);
+      border-radius: 100px;
+      padding: 5px 14px 5px 10px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.09em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      animation: riseIn .65s .16s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100%{ box-shadow: 0 0 0 0 rgba(220,60,60,.6); }
+      50%     { box-shadow: 0 0 0 5px rgba(220,60,60,0); }
+    }
+
+    /* ── ICON + TITLE ── */
+    .title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+      animation: riseIn .65s .2s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .lock-wrap {
+      width: 52px; height: 52px;
+      flex-shrink: 0;
+      border-radius: 14px;
+      background: var(--red-dim);
+      border: 1px solid rgba(220,60,60,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      font-size: clamp(20px, 3.8vw, 24px);
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      padding-top: 4px;
+    }
+    h1 em { font-style: normal; color: var(--red); }
+
+    /* ── BODY TEXT ── */
+    .body-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text-secondary);
+      margin-bottom: 22px;
+      animation: riseIn .65s .26s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* ── NOTICE BOX ── */
+    .notice {
+      position: relative;
+      background: rgba(0,191,255,0.04);
+      border: 1px solid rgba(0,191,255,0.14);
+      border-left: 3px solid var(--cyan);
+      border-radius: 10px;
+      padding: 15px 18px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+      animation: riseIn .65s .3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .notice strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ── STATUS PILL ── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-mid);
+      border: 1px solid rgba(220,60,60,0.35);
+      border-radius: 10px;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 11px 20px;
+      animation: riseIn .65s .34s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* ── META ROW ── */
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+      animation: riseIn .65s .38s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .meta-item { display: flex; flex-direction: column; gap: 3px; }
+    .meta-label {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .meta-value {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+    .meta-value.hi { color: var(--cyan); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      animation: riseIn .65s .44s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .card-body { padding: 32px 24px 28px; }
+      .header-row { gap: 14px; }
+      .logo-wrap { width: 48px; height: 48px; }
+      .brand-name { font-size: 16px; }
+      .meta-row { gap: 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar"></div>
+
+<main class="card" role="main" aria-labelledby="block-title">
+  <div class="card-stripe"></div>
+
+  <div class="card-body">
+
+    <!-- Brand header -->
+    <div class="header-row">
+      <div class="logo-wrap" aria-hidden="true">
+        <!-- LOGO PLACEHOLDER: replace src with your GitHub raw URL or keep base64 below -->
+        <img
+          src="https://raw.githubusercontent.com/JesusOchoa860/JOTech-BlockPage/main/LOGO_JOTech.png"
+          alt="JOTech Logo"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=\'28\' height=\'28\' viewBox=\'0 0 24 24\' fill=\'none\'><path d=\'M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z\' stroke=\'%2300BFFF\' stroke-width=\'1.8\' fill=\'none\'/></svg>'"
+        />
+      </div>
+      <div class="brand-text">
+        <div class="brand-name"><span>JO</span>Tech</div>
+        <div class="brand-sub">Zero Trust Security Platform</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Status badge -->
+    <div class="badge">
+      <span class="dot"></span>
+      ACCESO DENEGADO — HTTP 307
+    </div>
+
+    <!-- Title + lock icon -->
+    <div class="title-row">
+      <div class="lock-wrap" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <rect x="4" y="11" width="16" height="11" rx="2.5" stroke="#DC3C3C" stroke-width="1.8" fill="none"/>
+          <path d="M8 11V7.5C8 5.015 9.79 3 12 3s4 2.015 4 4.5V11" stroke="#DC3C3C" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="12" cy="16.5" r="1.4" fill="#DC3C3C"/>
+          <line x1="12" y1="17.9" x2="12" y2="19.5" stroke="#DC3C3C" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 id="block-title">Acceso Restringido<br/><em>por Seguridad</em></h1>
+    </div>
+
+    <!-- Description -->
+    <p class="body-text">
+      El sitio web al que intenta acceder no está permitido por las políticas de seguridad de la organización. Esta acción ha sido registrada automáticamente por el sistema de monitoreo de JOTech.
+    </p>
+
+    <!-- Notice -->
+    <div class="notice" role="note">
+      <strong>¿Considera que esto es un error?</strong><br/>
+      Si requiere acceso para fines laborales o cree que este bloqueo no corresponde a su actividad,
+      abra un <strong>ticket de soporte</strong> con el administrador de TI indicando el sitio
+      solicitado y el motivo de acceso.
+    </div>
+
+    <!-- Status -->
+    <div class="status-pill" role="status">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z"
+              stroke="#DC3C3C" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <path d="M9 12l2 2 4-4" stroke="#DC3C3C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      POLÍTICA CORPORATIVA ACTIVA
+    </div>
+
+    <!-- Meta -->
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Hora del evento</span>
+        <span class="meta-value" id="ts">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Motor</span>
+        <span class="meta-value hi">Cloudflare Gateway</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Categoría</span>
+        <span class="meta-value">Política corporativa</span>
+      </div>
+    </div>
+
+  </div><!-- /.card-body -->
+</main>
+
+<footer>
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z"
+          stroke="#3E3E4A" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+  </svg>
+  Protegido por JOTech Zero Trust Security
+</footer>
+
+<script>
+  const ts = document.getElementById('ts');
+  ts.textContent = new Date().toLocaleString('es-ES', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+</script>
+
+</body>
+</html>
