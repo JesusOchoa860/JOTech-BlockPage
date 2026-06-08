@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso Restringido — JOTech Zero Trust</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-void:       #09090B;
+      --bg-card:       #16161A;
+      --border:        #252529;
+      --border-hi:     rgba(0,191,255,0.18);
+      --cyan:          #00BFFF;
+      --cyan-dim:      rgba(0,191,255,0.10);
+      --red:           #DC3C3C;
+      --red-dim:       rgba(220,60,60,0.10);
+      --red-mid:       rgba(220,60,60,0.18);
+      --text-primary:  #EAEAEA;
+      --text-secondary:#8888A0;
+      --text-muted:    #3E3E4A;
+      --mono:          'DM Mono', monospace;
+      --sans:          'Syne', sans-serif;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,191,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,191,255,0.025) 1px, transparent 1px);
+      background-size: 52px 52px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px; height: 500px;
+      background:
+        radial-gradient(ellipse 60% 50% at 35% 50%, rgba(0,191,255,0.055) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 65% 50%, rgba(220,60,60,0.055) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--cyan) 30%, rgba(0,191,255,0.4) 50%, var(--red) 70%, transparent 100%);
+      z-index: 10;
+      animation: scanpulse 4s ease-in-out infinite;
+    }
+    @keyframes scanpulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 600px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.025),
+        0 40px 100px rgba(0,0,0,0.7),
+        0 0 50px rgba(0,191,255,0.06),
+        0 0 50px rgba(220,60,60,0.06);
+      animation: riseIn .65s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes riseIn {
+      from { opacity:0; transform: translateY(30px) scale(0.98); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+
+    .card-stripe {
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan) 0%, var(--red) 100%);
+    }
+
+    .card-body { padding: 44px 48px 40px; }
+
+    /* Header */
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 28px;
+      animation: riseIn .65s .08s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .logo-wrap {
+      width: 56px; height: 56px;
+      flex-shrink: 0;
+      border-radius: 14px;
+      background: var(--cyan-dim);
+      border: 1px solid var(--border-hi);
+      display: flex; align-items: center; justify-content: center;
+      padding: 6px;
+    }
+    .logo-wrap img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 6px rgba(0,191,255,0.35));
+    }
+    .brand-name { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+    .brand-name span { color: var(--cyan); }
+    .brand-sub {
+      font-family: var(--mono);
+      font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .sep {
+      height: 1px;
+      background: linear-gradient(90deg, var(--border) 0%, rgba(0,191,255,0.15) 50%, var(--border) 100%);
+      margin-bottom: 24px;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--red-dim);
+      border: 1px solid rgba(220,60,60,0.3);
+      border-radius: 100px;
+      padding: 5px 14px 5px 10px;
+      font-family: var(--mono);
+      font-size: 10.5px; letter-spacing: 0.09em;
+      color: var(--red); text-transform: uppercase;
+      margin-bottom: 20px;
+      animation: riseIn .65s .16s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100%{ box-shadow: 0 0 0 0 rgba(220,60,60,.6); }
+      50%     { box-shadow: 0 0 0 5px rgba(220,60,60,0); }
+    }
+
+    /* Title */
+    .title-row {
+      display: flex; align-items: flex-start; gap: 14px;
+      margin-bottom: 16px;
+      animation: riseIn .65s .2s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .lock-wrap {
+      width: 48px; height: 48px; flex-shrink: 0;
+      border-radius: 12px;
+      background: var(--red-dim);
+      border: 1px solid rgba(220,60,60,0.2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    h1 {
+      font-size: clamp(19px,3.5vw,23px);
+      font-weight: 800; line-height: 1.25;
+      letter-spacing: -0.02em;
+      padding-top: 3px;
+    }
+    h1 em { font-style: normal; color: var(--red); }
+
+    .body-text {
+      font-size: 13.5px; line-height: 1.75;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      animation: riseIn .65s .26s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* Blocked URL highlight box */
+    .blocked-url-box {
+      background: rgba(220,60,60,0.06);
+      border: 1px solid rgba(220,60,60,0.2);
+      border-radius: 10px;
+      padding: 13px 16px;
+      margin-bottom: 20px;
+      display: none;
+      animation: riseIn .65s .28s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .blocked-url-box.visible { display: block; }
+    .blocked-url-label {
+      font-family: var(--mono);
+      font-size: 9.5px; letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .blocked-url-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-primary);
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    /* Categories */
+    .categories-wrap {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+      animation: riseIn .65s .3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .categories-wrap.visible { display: flex; }
+    .cat-label {
+      font-family: var(--mono);
+      font-size: 9.5px; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      width: 100%;
+      margin-bottom: 2px;
+    }
+    .cat-pill {
+      background: rgba(0,191,255,0.08);
+      border: 1px solid rgba(0,191,255,0.2);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--cyan);
+    }
+
+    /* Notice */
+    .notice {
+      background: rgba(0,191,255,0.04);
+      border: 1px solid rgba(0,191,255,0.14);
+      border-left: 3px solid var(--cyan);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px; line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 26px;
+      animation: riseIn .65s .32s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .notice strong { color: var(--text-primary); font-weight: 600; }
+
+    /* Status pill */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--red-mid);
+      border: 1px solid rgba(220,60,60,0.35);
+      border-radius: 10px;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+      padding: 10px 18px;
+      animation: riseIn .65s .34s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* Meta row */
+    .meta-row {
+      display: flex; flex-wrap: wrap;
+      gap: 12px 24px;
+      margin-top: 24px; padding-top: 20px;
+      border-top: 1px solid var(--border);
+      animation: riseIn .65s .38s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .meta-item { display: flex; flex-direction: column; gap: 3px; }
+    .meta-label {
+      font-family: var(--mono);
+      font-size: 9.5px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .meta-value {
+      font-family: var(--mono);
+      font-size: 11.5px; color: var(--text-secondary);
+    }
+    .meta-value.hi { color: var(--cyan); }
+    .meta-value.hidden-field { display: none; }
+
+    footer {
+      position: relative; z-index: 1;
+      margin-top: 22px;
+      display: flex; align-items: center; gap: 7px;
+      font-family: var(--mono);
+      font-size: 10.5px; color: var(--text-muted);
+      letter-spacing: 0.05em;
+      animation: riseIn .65s .44s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @media (max-width: 480px) {
+      .card-body { padding: 30px 22px 26px; }
+      .header-row { gap: 12px; }
+      .logo-wrap { width: 46px; height: 46px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar"></div>
+
+<main class="card" role="main" aria-labelledby="block-title">
+  <div class="card-stripe"></div>
+  <div class="card-body">
+
+    <!-- Brand -->
+    <div class="header-row">
+      <div class="logo-wrap" aria-hidden="true">
+        <img
+          src="https://raw.githubusercontent.com/JesusOchoa860/JOTech-BlockPage/main/LOGO_JOTech.png"
+          alt="JOTech Logo"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=\'28\' height=\'28\' viewBox=\'0 0 24 24\' fill=\'none\'><path d=\'M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z\' stroke=\'%2300BFFF\' stroke-width=\'1.8\' fill=\'none\'/></svg>'"
+        />
+      </div>
+      <div>
+        <div class="brand-name"><span>JO</span>Tech</div>
+        <div class="brand-sub">Zero Trust Security Platform</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="badge"><span class="dot"></span>ACCESO DENEGADO — HTTP 307</div>
+
+    <!-- Title -->
+    <div class="title-row">
+      <div class="lock-wrap" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="4" y="11" width="16" height="11" rx="2.5" stroke="#DC3C3C" stroke-width="1.8" fill="none"/>
+          <path d="M8 11V7.5C8 5.015 9.79 3 12 3s4 2.015 4 4.5V11" stroke="#DC3C3C" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="12" cy="16.5" r="1.4" fill="#DC3C3C"/>
+          <line x1="12" y1="17.9" x2="12" y2="19.5" stroke="#DC3C3C" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 id="block-title">Acceso Restringido<br/><em>por Seguridad</em></h1>
+    </div>
+
+    <p class="body-text">
+      El sitio web al que intenta acceder no está permitido por las políticas de seguridad de la organización. Esta acción ha sido registrada por el sistema de monitoreo de JOTech.
+    </p>
+
+    <!-- Sitio bloqueado (dinámico) -->
+    <div class="blocked-url-box" id="blockedUrlBox">
+      <div class="blocked-url-label">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#DC3C3C" stroke-width="1.8"/>
+          <line x1="12" y1="8" x2="12" y2="13" stroke="#DC3C3C" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="16" r="1" fill="#DC3C3C"/>
+        </svg>
+        Sitio bloqueado
+      </div>
+      <div class="blocked-url-value" id="blockedUrlValue">—</div>
+    </div>
+
+    <!-- Categorías (dinámico) -->
+    <div class="categories-wrap" id="categoriesWrap">
+      <span class="cat-label">Categorías detectadas</span>
+    </div>
+
+    <!-- Aviso -->
+    <div class="notice" role="note">
+      <strong>¿Considera que esto es un error?</strong><br/>
+      Si requiere acceso para fines laborales, abra un <strong>ticket de soporte</strong>
+      con el administrador de TI indicando el sitio solicitado y el motivo de acceso.
+    </div>
+
+    <div class="status-pill" role="status">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z"
+              stroke="#DC3C3C" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <path d="M9 12l2 2 4-4" stroke="#DC3C3C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      POLÍTICA CORPORATIVA ACTIVA
+    </div>
+
+    <!-- Metadatos -->
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Hora del evento</span>
+        <span class="meta-value" id="ts">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Motor</span>
+        <span class="meta-value hi">Cloudflare Gateway</span>
+      </div>
+      <div class="meta-item" id="userMeta" style="display:none">
+        <span class="meta-label">Usuario</span>
+        <span class="meta-value" id="userValue">—</span>
+      </div>
+      <div class="meta-item" id="ipMeta" style="display:none">
+        <span class="meta-label">IP origen</span>
+        <span class="meta-value" id="ipValue">—</span>
+      </div>
+      <div class="meta-item" id="ruleMeta" style="display:none">
+        <span class="meta-label">Regla ID</span>
+        <span class="meta-value" id="ruleValue">—</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z"
+          stroke="#3E3E4A" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+  </svg>
+  Protegido por JOTech Zero Trust Security
+</footer>
+
+<script>
+  // ── Timestamp ────────────────────────────────────────────
+  document.getElementById('ts').textContent = new Date().toLocaleString('es-ES', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+
+  // ── Leer parámetros de Cloudflare Gateway ────────────────
+  // Docs: https://developers.cloudflare.com/cloudflare-one/traffic-policies/http-policies/
+  // Parámetros enviados cuando "Send policy context" está activo:
+  //   cf_site_uri        → URL original bloqueada
+  //   cf_request_categories → categorías del dominio (separadas por coma)
+  //   cf_user_email      → email del usuario
+  //   cf_source_ip       → IP de origen
+  //   cf_rule_id         → ID de la regla que disparó el bloqueo
+
+  const params = new URLSearchParams(window.location.search);
+
+  const siteUri   = params.get('cf_site_uri');
+  const categories= params.get('cf_request_categories');
+  const userEmail = params.get('cf_user_email');
+  const sourceIp  = params.get('cf_source_ip');
+  const ruleId    = params.get('cf_rule_id');
+
+  // Sitio bloqueado
+  if (siteUri) {
+    const box = document.getElementById('blockedUrlBox');
+    document.getElementById('blockedUrlValue').textContent = decodeURIComponent(siteUri);
+    box.classList.add('visible');
+  }
+
+  // Categorías
+  if (categories) {
+    const wrap = document.getElementById('categoriesWrap');
+    const decoded = decodeURIComponent(categories);
+    decoded.split(',').forEach(cat => {
+      const pill = document.createElement('span');
+      pill.className = 'cat-pill';
+      pill.textContent = cat.trim();
+      wrap.appendChild(pill);
+    });
+    wrap.classList.add('visible');
+  }
+
+  // Usuario
+  if (userEmail) {
+    document.getElementById('userMeta').style.display = '';
+    document.getElementById('userValue').textContent = decodeURIComponent(userEmail);
+  }
+
+  // IP origen
+  if (sourceIp) {
+    document.getElementById('ipMeta').style.display = '';
+    document.getElementById('ipValue').textContent = sourceIp;
+  }
+
+  // Regla ID (mostrar solo los primeros 8 caracteres)
+  if (ruleId) {
+    document.getElementById('ruleMeta').style.display = '';
+    document.getElementById('ruleValue').textContent = ruleId.substring(0, 8) + '…';
+  }
+</script>
+
+</body>
+</html>
