@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Acceso Restringido — JOTechsolutions</title>
+  <link rel="icon" href="Symbol_only_Red_PNG.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #f8040c;
+      --orange: #ff9100;
+      --ok: #22c55e;
+      --bg: #000000;
+      --surface: #0e0e0e;
+      --line: #232323;
+      --line-strong: #353535;
+      --text: #ffffff;
+      --text-2: #a6a6a6;
+      --text-3: #6d6d6d;
+      --nav-bg: rgba(0, 0, 0, 0.72);
+      --sans: 'Fira Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --mono: 'Fira Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+      --radius: 14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { width: 100%; max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+    :focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; border-radius: 6px; }
+
+    /* ───────── NAV ───────── */
+    .nav {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--nav-bg);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { height: 64px; display: flex; align-items: center; }
+
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+    .brand img { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; display: block; }
+    .brand-name { font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+    .brand-name span { font-weight: 400; color: var(--text-2); }
+
+    /* ───────── HERO ───────── */
+    main { flex: 1; }
+    .hero { padding: 72px 0 40px; }
+
+    .reveal { opacity: 0; transform: translateY(14px); animation: rise .7s cubic-bezier(.22,1,.36,1) forwards; animation-delay: var(--d, 0s); }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 20px;
+    }
+    .eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--red); }
+
+    h1 {
+      font-size: clamp(34px, 5.6vw, 56px);
+      font-weight: 800; line-height: 1.04; letter-spacing: -0.025em;
+      margin-bottom: 22px;
+    }
+    h1 .accent { color: var(--red); display: block; }
+
+    .lead { font-size: 17px; color: var(--text-2); max-width: 560px; margin-bottom: 28px; }
+
+    /* Sitio bloqueado (sin línea lateral) */
+    .blocked {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px;
+    }
+    .label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3);
+    }
+    .blocked .label { color: var(--red); margin-bottom: 6px; }
+    .blocked-value { font-family: var(--mono); font-size: 15px; word-break: break-all; }
+
+    .cats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .cats .label { margin-right: 4px; }
+    .pill {
+      font-size: 12px; font-weight: 500; color: var(--text);
+      background: var(--surface); border: 1px solid var(--line-strong);
+      border-radius: 999px; padding: 4px 12px;
+    }
+
+    /* Aviso + acciones */
+    .notice {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 22px; margin-top: 18px;
+      transition: border-color .25s;
+    }
+    .notice:hover { border-color: var(--line-strong); }
+    .notice h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .notice p { font-size: 14px; color: var(--text-2); margin-bottom: 18px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      font: 600 14px/1 var(--sans); letter-spacing: 0.01em;
+      padding: 13px 20px; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; transition: transform .2s, background .2s, border-color .2s, box-shadow .2s;
+    }
+    .btn svg { flex-shrink: 0; }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(248,4,12,.28); }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--line-strong); }
+    .btn-ghost:hover { border-color: var(--text-3); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    /* Estados: carga, éxito, error */
+    .btn[data-state="loading"] { pointer-events: none; opacity: .85; }
+    .btn[data-state="loading"] .ico { display: none; }
+    .btn[data-state="loading"]::before {
+      content: ''; width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.35); border-top-color: currentColor; animation: spin .7s linear infinite;
+    }
+    .btn-ghost[data-state="loading"]::before { border-color: var(--line-strong); border-top-color: var(--text); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn[data-state="success"] { background: var(--ok); border-color: var(--ok); color: #04210f; }
+    .btn-ghost[data-state="success"] { background: transparent; color: var(--ok); }
+    .btn[data-state="error"] { background: transparent; border-color: var(--red); color: var(--red); }
+
+    .feedback { min-height: 20px; margin-top: 12px; font-size: 13px; color: var(--text-3); }
+
+    /* ───────── DETALLES ───────── */
+    .details { padding: 24px 0 64px; border-top: 1px solid var(--line); margin-top: 24px; }
+    .details-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 28px 0 18px; }
+    .details-head h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px;
+      transition: border-color .25s, transform .25s;
+    }
+    .card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+    .card .label { margin-bottom: 8px; }
+    .card .val { font-family: var(--mono); font-size: 13px; color: var(--text); word-break: break-all; line-height: 1.5; }
+    .card.accent .val { color: var(--red); }
+    .card.wide { grid-column: span 2; }
+    .card[hidden] { display: none; }
+
+    /* ───────── FOOTER ───────── */
+    footer { border-top: 1px solid var(--line); }
+    .foot { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 22px 0; font-size: 12px; color: var(--text-3); letter-spacing: .04em; text-align: center; }
+    .foot span { display: inline-flex; align-items: center; gap: 8px; }
+
+    /* ───────── RESPONSIVE ───────── */
+    @media (max-width: 640px) {
+      .wrap { padding: 0 18px; }
+      .nav-inner { height: 58px; }
+      .hero { padding: 32px 0 24px; }
+      .eyebrow { font-size: 11px; margin-bottom: 14px; }
+      h1 { font-size: 34px; margin-bottom: 16px; }
+      .lead { font-size: 15px; margin-bottom: 22px; }
+      .blocked { padding: 14px 15px; }
+      .blocked-value { font-size: 13.5px; }
+      .notice { padding: 18px; }
+      .actions { flex-direction: column; }
+      .btn { width: 100%; }
+      .details { padding-bottom: 40px; }
+      .details-head { margin-top: 22px; }
+      .grid { gap: 10px; }
+      .card { padding: 13px 14px; }
+      .card .val { font-size: 12px; }
+    }
+    @media (max-width: 380px) { .grid { grid-template-columns: 1fr; } .card.wide { grid-column: auto; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═════════ NAV ═════════ -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#" aria-label="JOTechsolutions">
+      <img src="Symbol_only_Red_PNG.png" alt="Logo JOTechsolutions" width="32" height="32" />
+      <span class="brand-name">JOTech<span>solutions</span></span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- ═════════ HERO ═════════ -->
+    <section class="hero" aria-labelledby="titulo">
+      <div class="eyebrow reveal">Acceso denegado · HTTP 307</div>
+
+      <h1 id="titulo" class="reveal" style="--d:.06s">
+        Acceso Restringido <span class="accent">por Seguridad</span>
+      </h1>
+
+      <p class="lead reveal" style="--d:.12s">
+        El sitio web al que intenta acceder no está permitido por las políticas de seguridad de la organización.
+      </p>
+
+      <!-- Sitio bloqueado (dinámico) -->
+      <div class="blocked reveal" id="blockedBox" style="--d:.18s" hidden>
+        <div class="label">Sitio bloqueado</div>
+        <div class="blocked-value" id="blockedValue">—</div>
+      </div>
+
+      <!-- Categorías (dinámico) -->
+      <div class="cats reveal" id="catsWrap" style="--d:.22s" hidden>
+        <span class="label">Categorías</span>
+      </div>
+
+      <!-- Aviso + acciones -->
+      <div class="notice reveal" style="--d:.26s">
+        <h2>¿Considera que esto es un error?</h2>
+        <p>
+          Si considera que esto es un error o requiere acceso para fines laborales, por favor abra un
+          ticket de soporte con el administrador de TI. Se abrirá su correo con toda la información del
+          bloqueo ya incluida.
+        </p>
+        <div class="actions">
+          <button class="btn btn-primary" id="ticketBtn" type="button" data-state="idle">
+            <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+            <span class="txt">Abrir ticket de soporte</span>
+          </button>
+          <button class="btn btn-ghost" id="copyBtn" type="button" data-state="idle">
+            <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+            <span class="txt">Copiar detalles</span>
+          </button>
+        </div>
+        <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ═════════ DETALLES ═════════ -->
+    <section class="details" aria-labelledby="detalles">
+      <div class="details-head">
+        <h3 id="detalles">Detalles del evento</h3>
+        <span class="label">Registrado automáticamente</span>
+      </div>
+      <div class="grid">
+        <div class="card"><div class="label">Hora del evento</div><div class="val" id="ts">—</div></div>
+        <div class="card"><div class="label">Motor</div><div class="val">Cloudflare Gateway</div></div>
+        <div class="card" id="userCard" hidden><div class="label">Usuario</div><div class="val" id="userVal">—</div></div>
+        <div class="card accent" id="ipCard" hidden><div class="label">IP origen</div><div class="val" id="ipVal">—</div></div>
+        <div class="card wide accent" id="ruleCard" hidden><div class="label">Regla ID · Cloudflare Gateway</div><div class="val" id="ruleVal">—</div></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6l-9-4z"/></svg>
+      Protegido por JOTechsolutions Zero Trust Security
+    </span>
+  </div>
+</footer>
+
+<script>
+  // ============================================================
+  // CONFIGURACIÓN — cambiar el correo de soporte aquí
+  // ============================================================
+  const SUPPORT_EMAIL = 'jesus-o-jotech@zohomail.com';
+  // ============================================================
+
+  const $ = (id) => document.getElementById(id);
+  const now = new Date();
+  const ts = now.toLocaleString('es-ES', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  $('ts').textContent = ts;
+
+  // ── Contexto enviado por Cloudflare Gateway (Send policy context) ──
+  // URLSearchParams ya decodifica los valores; se muestran siempre con textContent.
+  const p = new URLSearchParams(window.location.search);
+  const siteUri    = p.get('cf_site_uri');
+  const categories = p.get('cf_request_categories');
+  const userEmail  = p.get('cf_user_email');
+  const sourceIp   = p.get('cf_source_ip');
+  const ruleId     = p.get('cf_rule_id');
+
+  if (siteUri) {
+    $('blockedValue').textContent = siteUri;
+    $('blockedBox').hidden = false;
+  }
+  if (categories) {
+    const wrap = $('catsWrap');
+    categories.split(',').map(c => c.trim()).filter(Boolean).forEach(c => {
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = c;
+      wrap.appendChild(pill);
+    });
+    wrap.hidden = false;
+  }
+  if (userEmail) { $('userVal').textContent = userEmail; $('userCard').hidden = false; }
+  if (sourceIp)  { $('ipVal').textContent = sourceIp;   $('ipCard').hidden = false; }
+  if (ruleId)    { $('ruleVal').textContent = ruleId;   $('ruleCard').hidden = false; }
+
+  // ── Estados de botones (idle / loading / success / error) ──
+  const feedback = $('feedback');
+  function setState(btn, state, label, message) {
+    btn.dataset.state = state;
+    btn.querySelector('.txt').textContent = label;
+    feedback.textContent = message || '';
+  }
+  function resetLater(btn, label, ms) {
+    setTimeout(() => setState(btn, 'idle', label, ''), ms);
+  }
+
+  // ── Datos del evento (se usan en el correo y al copiar) ───
+  function reportLines() {
+    return [
+      'Fecha y hora del bloqueo: ' + ts,
+      'Motor de seguridad: Cloudflare Gateway - JOTechsolutions Zero Trust',
+      'Sitio bloqueado: ' + (siteUri || 'No disponible'),
+      'Categorías detectadas: ' + (categories || 'No disponible'),
+      'Usuario: ' + (userEmail || 'No disponible'),
+      'IP de origen: ' + (sourceIp || 'No disponible'),
+      'ID de regla Gateway: ' + (ruleId || 'No disponible')
+    ];
+  }
+
+  // ── Abrir ticket: correo con plantilla completa ───────────
+  const ticketBtn = $('ticketBtn');
+  const TICKET_LABEL = 'Abrir ticket de soporte';
+  ticketBtn.addEventListener('click', () => {
+    setState(ticketBtn, 'loading', 'Abriendo correo…', '');
+    try {
+      const subject = '[SOLICITUD DE ACCESO] Sitio bloqueado por JOTechsolutions Zero Trust';
+      const body = [
+        'Estimado equipo de TI,',
+        '',
+        'El sistema JOTechsolutions Zero Trust bloqueó mi acceso a un sitio web.',
+        'Por favor revisen si el bloqueo es correcto o si requiero acceso para fines laborales.',
+        '',
+        '--- INFORMACIÓN DEL EVENTO (generada automáticamente) ---',
+        ...reportLines(),
+        '',
+        '--- MOTIVO DE LA SOLICITUD (completar) ---',
+        'Motivo de acceso requerido:',
+        '[Escriba aquí el motivo]',
+        '',
+        'Proyecto o tarea relacionada:',
+        '[Escriba aquí el proyecto o tarea]',
+        '',
+        'Frecuencia de uso estimada:',
+        '[Ej: uso único / diario / semanal]',
+        '',
+        'Correo generado por la página de bloqueo de JOTechsolutions Zero Trust Security.'
+      ].join('\r\n');
+
+      window.location.href = 'mailto:' + SUPPORT_EMAIL +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body=' + encodeURIComponent(body);
+
+      setTimeout(() => setState(ticketBtn, 'success', 'Correo preparado',
+        'Si no se abrió su aplicación de correo, use “Copiar detalles” y envíelos a ' + SUPPORT_EMAIL + '.'), 900);
+      resetLater(ticketBtn, TICKET_LABEL, 7000);
+    } catch (e) {
+      setState(ticketBtn, 'error', 'No se pudo abrir', 'No fue posible abrir el correo. Use “Copiar detalles”.');
+      resetLater(ticketBtn, TICKET_LABEL, 5000);
+    }
+  });
+
+  // ── Copiar detalles al portapapeles ───────────────────────
+  const copyBtn = $('copyBtn');
+  const COPY_LABEL = 'Copiar detalles';
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (!ok) throw new Error('copy failed');
+  }
+  copyBtn.addEventListener('click', async () => {
+    setState(copyBtn, 'loading', 'Copiando…', '');
+    try {
+      await copyText(reportLines().join('\n'));
+      setState(copyBtn, 'success', 'Copiado', 'Detalles copiados. Péguelos en su ticket o correo de soporte.');
+    } catch (e) {
+      setState(copyBtn, 'error', 'No se pudo copiar', 'No se pudo copiar automáticamente. Seleccione y copie la información manualmente.');
+    }
+    resetLater(copyBtn, COPY_LABEL, 5000);
+  });
+</script>
+
+</body>
+</html>
